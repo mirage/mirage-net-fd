@@ -17,26 +17,29 @@
 open Lwt
 open Printf
 
+let fd1, _ = Unix.pipe ()
+let fd2, _ = Unix.pipe ()
+
 let run test =
   Lwt_main.run (test ())
 
 let test_open () =
-  Netif.connect "tap0" >>= fun _t ->
+  Netif_fd.connect fd1 >>= fun _t ->
   printf "connected\n%!";
   Lwt.return_unit
 
 let test_close () =
-  Netif.connect "tap1" >>= fun t ->
+  Netif_fd.connect fd1 >>= fun t ->
   printf "connected\n%!";
-  Netif.disconnect t >>= fun () ->
+  Netif_fd.disconnect t >>= fun () ->
   printf "disconnected\n%!";
   Lwt.return_unit
 
 let test_write () =
-  Netif.connect "tap2" >>= fun t ->
+  Netif_fd.connect fd2 >>= fun t ->
   let data = Cstruct.create 4096 in
-  Netif.writev t [ data ] >>= fun _t ->
-  Netif.writev t [ data ; (Cstruct.create 14) ] >>= fun _t ->
+  Netif_fd.writev t [ data ] >>= fun _t ->
+  Netif_fd.writev t [ data ; (Cstruct.create 14) ] >>= fun _t ->
   Lwt.return_unit
 
 let suite : Alcotest.test_case list = [

@@ -1,8 +1,5 @@
-mirage-net-unix
-=================
+### mirage-net-fd -- MirageOS network interfaces using raw sockets
 
-Unix implementation of the Mirage NETWORK interface.
-
-This interface exposes raw Ethernet frames using `ocaml-tuntap`,
-suitable for use with an OCaml network stack such as the one
-found at <https://github.com/mirage/mirage-tcpip>.
+Implementation of MirageOS network interfaces using raw sockets. The
+caller is in charge of opening the file-descriptor with that are passed
+to the `connect` function.

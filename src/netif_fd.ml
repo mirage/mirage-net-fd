@@ -26,7 +26,7 @@ let (>|=) = Lwt.(>|=)
 type +'a io = 'a Lwt.t
 
 type t = {
-  id: string;
+  id: int;
   dev: Lwt_unix.file_descr;
   mutable active: bool;
   mutable mac: Macaddr.t;
@@ -35,50 +35,40 @@ type t = {
 
 type error = [
   | Mirage_net.error
-  | `Partial of string * int * Cstruct.t
+  | `Partial of int * int * Cstruct.t
   | `Exn of exn
 ]
 
 let pp_error ppf = function
   | #Mirage_net.error as e -> Mirage_net.pp_error ppf e
   | `Partial (id, len', buffer) ->
-    Fmt.pf ppf "netif %s: partial write (%d, expected %d)"
+    Fmt.pf ppf "netif :%d: partial write (%d, expected %d)"
       id len' buffer.Cstruct.len
   | `Exn e -> Fmt.exn ppf e
 
 let devices = Hashtbl.create 1
 
-let err_permission_denied devname =
-  Printf.sprintf
-    "Permission denied while opening the %s device. Please re-run using sudo."
-    devname
+let int_of_fd (x: Unix.file_descr) : int = Obj.magic x
 
-let connect devname =
-  try
-    Random.self_init ();
-    let fd, devname = Tuntap.opentap ~pi:false ~devname () in
-    let dev = Lwt_unix.of_unix_file_descr ~blocking:true fd in
-    let mac = Macaddr.make_local (fun _ -> Random.int 256) in
-    Tuntap.set_up_and_running devname;
-    log "plugging into %s with mac %s" devname (Macaddr.to_string mac);
-    let active = true in
-    let t = {
-      id=devname; dev; active; mac;
-      stats= { rx_bytes=0L;rx_pkts=0l; tx_bytes=0L; tx_pkts=0l } }
-    in
-    Hashtbl.add devices devname t;
-    log "connect %s" devname;
-    Lwt.return t
-  with
-  | Failure "tun[open]: Permission denied" ->
-    Lwt.fail_with (err_permission_denied devname)
-  | exn -> Lwt.fail exn
+let connect fd =
+  Random.self_init ();
+  let id = int_of_fd fd in
+  let dev = Lwt_unix.of_unix_file_descr ~blocking:true fd in
+  let mac = Macaddr.make_local (fun _ -> Random.int 256) in
+  log "plugging into :%d with mac %s" id (Macaddr.to_string mac);
+  let active = true in
+  let t = {
+    id; dev; active; mac;
+    stats= { rx_bytes=0L;rx_pkts=0l; tx_bytes=0L; tx_pkts=0l } }
+  in
+  Hashtbl.add devices id t;
+  log "connect :%d" id;
+  Lwt.return t
 
 let disconnect t =
-  log "disconnect %s" t.id;
+  log "disconnect :%d" t.id;
   t.active <- false;
   Lwt_unix.close t.dev >>= fun () ->
-  Tuntap.closetap t.id;
   Lwt.return_unit
 
 type macaddr = Macaddr.t
@@ -100,7 +90,7 @@ let rec read t page =
           Ok buf)
       (function
         | Unix.Unix_error(Unix.ENXIO, _, _) ->
-          log "[read] device %s is down, stopping" t.id;
+          log "[read] device :%d is down, stopping" t.id;
           Lwt.return (Error `Disconnected)
         | exn ->
           log "[read] error: %s, continuing" (Printexc.to_string exn);
@@ -150,12 +140,10 @@ let write t buffer =
       else Ok ())
     (fun exn -> Lwt.return (Error (`Exn exn)))
 
-
 let writev t = function
   | []     -> Lwt.return (Ok ())
   | [page] -> write t page
-  | pages  ->
-    write t @@ Cstruct.concat pages
+  | pages  -> write t @@ Cstruct.concat pages
 
 let mac t = t.mac
 

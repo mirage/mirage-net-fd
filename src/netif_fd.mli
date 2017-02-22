@@ -15,9 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-(** Implementation of the network interface for Unix backends. *)
+(** Implementation of the network interface using raw sockets. *)
 
 include Mirage_net_lwt.S
 
-val connect : string -> t Lwt.t
-(** [connect tap] connects to the given tap interface. *)
+val connect : Unix.file_descr -> t Lwt.t
+(** [connect fd] connects to the given file descriptor. The caller is
+    responsible to open a raw socket and set-up the file descriptor
+    properly. *)
