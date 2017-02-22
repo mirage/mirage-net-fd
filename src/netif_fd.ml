@@ -25,8 +25,12 @@ let (>|=) = Lwt.(>|=)
 
 type +'a io = 'a Lwt.t
 
+type id = Id of int
+
+let pp_id ppf (Id id) = Fmt.pf ppf "fd:%d" id
+
 type t = {
-  id: int;
+  id: id;
   dev: Lwt_unix.file_descr;
   mutable active: bool;
   mutable mac: Macaddr.t;
@@ -35,15 +39,15 @@ type t = {
 
 type error = [
   | Mirage_net.error
-  | `Partial of int * int * Cstruct.t
+  | `Partial of id * int * Cstruct.t
   | `Exn of exn
 ]
 
 let pp_error ppf = function
   | #Mirage_net.error as e -> Mirage_net.pp_error ppf e
   | `Partial (id, len', buffer) ->
-    Fmt.pf ppf "netif :%d: partial write (%d, expected %d)"
-      id len' buffer.Cstruct.len
+    Fmt.pf ppf "netif %a: partial write (%d, expected %d)"
+      pp_id id len' buffer.Cstruct.len
   | `Exn e -> Fmt.exn ppf e
 
 let devices = Hashtbl.create 1
@@ -52,21 +56,21 @@ let int_of_fd (x: Unix.file_descr) : int = Obj.magic x
 
 let connect fd =
   Random.self_init ();
-  let id = int_of_fd fd in
+  let id = Id (int_of_fd fd) in
   let dev = Lwt_unix.of_unix_file_descr ~blocking:true fd in
   let mac = Macaddr.make_local (fun _ -> Random.int 256) in
-  log "plugging into :%d with mac %s" id (Macaddr.to_string mac);
+  log "plugging into %a with mac %s" pp_id id (Macaddr.to_string mac);
   let active = true in
   let t = {
     id; dev; active; mac;
     stats= { rx_bytes=0L;rx_pkts=0l; tx_bytes=0L; tx_pkts=0l } }
   in
   Hashtbl.add devices id t;
-  log "connect :%d" id;
+  log "connect %a" pp_id id;
   Lwt.return t
 
 let disconnect t =
-  log "disconnect :%d" t.id;
+  log "disconnect %a" pp_id t.id;
   t.active <- false;
   Lwt_unix.close t.dev >>= fun () ->
   Lwt.return_unit
@@ -90,7 +94,7 @@ let rec read t page =
           Ok buf)
       (function
         | Unix.Unix_error(Unix.ENXIO, _, _) ->
-          log "[read] device :%d is down, stopping" t.id;
+          log "[read] device %a is down, stopping" pp_id t.id;
           Lwt.return (Error `Disconnected)
         | exn ->
           log "[read] error: %s, continuing" (Printexc.to_string exn);
