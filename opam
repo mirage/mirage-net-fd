@@ -10,6 +10,7 @@ homepage:    "https://github.com/mirage/mirage-net-fd"
 bug-reports: "https://github.com/mirage/mirage-net-fd/issues"
 dev-repo:    "https://github.com/mirage/mirage-net-fd.git"
 license:     "ISC"
+doc:         "https://mirage.github.io/mirage-net-fd/"
 
 build:   [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "false" ]
 build-test: [
