@@ -22,9 +22,10 @@ Implementation of the network interface using raw sockets.<br>
 
 <pre><span class="keyword">include</span> Mirage_net_lwt.S</pre>
 
-<pre><span id="VALconnect"><span class="keyword">val</span> connect</span> : <code class="type">Unix.file_descr -> t Lwt.t</code></pre><div class="info ">
-<code class="code">connect&nbsp;fd</code> connects to the given file descriptor. The caller is
-    responsible to open a raw socket and set-up the file descriptor
-    properly.<br>
+<pre><span id="VALconnect"><span class="keyword">val</span> connect</span> : <code class="type">?mac:Macaddr.t -> Unix.file_descr -> t Lwt.t</code></pre><div class="info ">
+<code class="code">connect&nbsp;?mac&nbsp;fd</code> connects to the given file descriptor. The
+    caller is responsible to open a raw socket and set-up the file
+    descriptor properly. If <code class="code">mac</code> is not specified, generate a random
+    one.<br>
 </div>
 </body></html>
