@@ -54,11 +54,14 @@ let devices = Hashtbl.create 1
 
 let int_of_fd (x: Unix.file_descr) : int = Obj.magic x
 
-let connect fd =
+let connect ?mac fd =
   Random.self_init ();
   let id = Id (int_of_fd fd) in
   let dev = Lwt_unix.of_unix_file_descr ~blocking:true fd in
-  let mac = Macaddr.make_local (fun _ -> Random.int 256) in
+  let mac = match mac with
+    | None   -> Macaddr.make_local (fun _ -> Random.int 256)
+    | Some m -> m
+  in
   log "plugging into %a with mac %s" pp_id id (Macaddr.to_string mac);
   let active = true in
   let t = {

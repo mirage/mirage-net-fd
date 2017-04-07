@@ -19,7 +19,8 @@
 
 include Mirage_net_lwt.S
 
-val connect : Unix.file_descr -> t Lwt.t
-(** [connect fd] connects to the given file descriptor. The caller is
-    responsible to open a raw socket and set-up the file descriptor
-    properly. *)
+val connect : ?mac:Macaddr.t -> Unix.file_descr -> t Lwt.t
+(** [connect ?mac fd] connects to the given file descriptor. The
+    caller is responsible to open a raw socket and set-up the file
+    descriptor properly. If [mac] is not specified, generate a random
+    one. *)
