@@ -1,8 +1,0 @@
-description = "Mirage network driver using pre-opened file-desciptors"
-version = "%%VERSION_NUM%%"
-requires = "cstruct.lwt cstruct lwt lwt.unix mirage-net-lwt ipaddr io-page.unix io-page result"
-archive(byte) = "mirage-net-fd.cma"
-archive(native) = "mirage-net-fd.cmxa"
-plugin(byte) = "mirage-net-fd.cma"
-plugin(native) = "mirage-net-fd.cmxs"
-exists_if = "mirage-net-fd.cma"
