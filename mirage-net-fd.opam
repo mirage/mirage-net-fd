@@ -21,7 +21,7 @@ depends: [
   "cstruct" {>= "1.7.1"}
   "lwt"            {>= "2.4.3"}
   "mirage-net-lwt" {>= "1.0.0"}
-  "io-page" {>= "1.0.1"}
+  "io-page-unix" {>= "2.0.0"}
   "result"
   "ipaddr"
   "alcotest" {test}
