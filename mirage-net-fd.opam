@@ -12,19 +12,17 @@ dev-repo:    "https://github.com/mirage/mirage-net-fd.git"
 license:     "ISC"
 doc:         "https://mirage.github.io/mirage-net-fd/"
 
-build:   [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "false" ]
-build-test: [
-  [ "ocaml" "pkg/pkg.ml" "build" "--tests" "true" ]
-  [ "ocaml" "pkg/pkg.ml" "test" ]
+build: [
+  ["jbuilder" "subst" "-p" name "--name" name] {pinned}
+  ["jbuilder" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "cstruct" {>= "1.7.1"}
-  "ocamlfind"  {build}
-  "ocamlbuild" {build}
-  "topkg"      {build}
+  "jbuilder" {build & >="1.0+beta9"}
+  "cstruct" {>= "2.4.0"}
+  "cstruct-lwt"
   "lwt"            {>= "2.4.3"}
   "mirage-net-lwt" {>= "1.0.0"}
-  "io-page" {>= "1.0.1"}
+  "io-page-unix" {>= "2.0.0"}
   "result"
   "ipaddr"
   "alcotest" {test}
